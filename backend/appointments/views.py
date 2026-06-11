@@ -7,7 +7,14 @@ from django.views.decorators.http import require_http_methods
 from backend.common.http import error, list_response, ok, parse_json
 
 from .models import Appointment
-from .services import create_appointment, list_appointments, serialize_appointment, update_appointment
+from .services import (
+    StatusTransitionError,
+    cancel_appointment,
+    create_appointment,
+    list_appointments,
+    serialize_appointment,
+    update_appointment,
+)
 
 
 @csrf_exempt
@@ -34,13 +41,16 @@ def appointment_detail(request, pk):
         return ok(serialize_appointment(appointment))
 
     if request.method == "DELETE":
-        appointment.delete()
-        return ok({"deleted": True})
+        try:
+            cancel_appointment(appointment)
+            return ok(serialize_appointment(appointment))
+        except StatusTransitionError as exc:
+            return error(str(exc))
 
     try:
         appointment = update_appointment(appointment, parse_json(request))
         appointment.full_clean()
         appointment.save()
         return ok(serialize_appointment(appointment))
-    except (ObjectDoesNotExist, ValidationError, IntegrityError, TypeError, ValueError) as exc:
+    except (ObjectDoesNotExist, ValidationError, IntegrityError, TypeError, ValueError, StatusTransitionError) as exc:
         return error(str(exc))
