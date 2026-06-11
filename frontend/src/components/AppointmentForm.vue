@@ -33,7 +33,7 @@
       <label>
         状态
         <select v-model="model.status">
-          <option v-for="opt in allowedStatusOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
+          <option v-for="opt in statusOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
         </select>
       </label>
     </template>
@@ -50,38 +50,16 @@
 
 <script setup>
 import { computed } from 'vue'
+import { getAllowedStatusOptions } from '../constants/appointments'
 
 const props = defineProps({
   model: { type: Object, required: true },
   residents: { type: Array, default: () => [] },
   isEdit: { type: Boolean, default: false },
+  isTerminal: { type: Boolean, default: false },
   currentStatus: { type: String, default: '' }
 })
 defineEmits(['submit', 'cancel'])
 
-const TERMINAL_STATUSES = ['completed', 'cancelled', 'rejected']
-
-const ALL_STATUS_OPTIONS = [
-  { value: 'pending', label: '待审核', from: [] },
-  { value: 'approved', label: '已通过', from: ['pending'] },
-  { value: 'rejected', label: '已拒绝', from: ['pending'] },
-  { value: 'completed', label: '已完成', from: ['approved'] },
-  { value: 'cancelled', label: '已取消', from: ['pending', 'approved'] }
-]
-
-const isTerminal = computed(() => TERMINAL_STATUSES.includes(props.currentStatus || props.model.status))
-
-const allowedStatusOptions = computed(() => {
-  if (!props.isEdit) {
-    return ALL_STATUS_OPTIONS
-  }
-  const cur = props.currentStatus || props.model.status
-  if (TERMINAL_STATUSES.includes(cur)) {
-    return ALL_STATUS_OPTIONS.filter(o => o.value === cur)
-  }
-  return ALL_STATUS_OPTIONS.filter(o => {
-    if (o.value === cur) return true
-    return o.from.includes(cur)
-  })
-})
+const statusOptions = computed(() => getAllowedStatusOptions(props.currentStatus || props.model.status, props.isEdit))
 </script>

@@ -37,6 +37,8 @@ def validate_status_transition(current_status, new_status):
     if current_status == new_status:
         return
     if current_status in TERMINAL_STATUSES:
+        if current_status == "completed":
+            raise StatusTransitionError("已完成的预约不可再次取消或变更状态")
         raise StatusTransitionError(
             f"当前状态为「{Appointment.STATUS_CHOICES[[s[0] for s in Appointment.STATUS_CHOICES].index(current_status)][1]}」，不允许再变更状态"
         )
@@ -54,8 +56,6 @@ def validate_status_transition(current_status, new_status):
             raise StatusTransitionError(
                 f"状态流转不合法：当前状态「{Appointment.STATUS_CHOICES[[s[0] for s in Appointment.STATUS_CHOICES].index(current_status)][1]}」不允许变更"
             )
-    if current_status == "completed":
-        raise StatusTransitionError("已完成的预约不可再次取消或变更状态")
 
 
 def serialize_appointment(appointment):
@@ -111,8 +111,6 @@ def update_appointment(appointment, payload):
 
 
 def cancel_appointment(appointment):
-    if appointment.status == "completed":
-        raise StatusTransitionError("已完成的预约不可再次取消")
     validate_status_transition(appointment.status, "cancelled")
     appointment.status = "cancelled"
     appointment.save()

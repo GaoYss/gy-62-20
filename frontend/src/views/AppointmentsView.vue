@@ -4,11 +4,12 @@
 
     <article class="panel">
       <h3>{{ formTitle }}</h3>
-      <p v-if="editingId && isTerminalStatus" class="terminal-notice">当前为终态预约，仅可修改备注信息。</p>
+      <p v-if="editingId && isTerminalEdit" class="terminal-notice">当前为终态预约，仅可修改备注信息。</p>
       <AppointmentForm
         :model="form"
         :residents="residents"
         :isEdit="!!editingId"
+        :isTerminal="isTerminalEdit"
         :currentStatus="originalStatus"
         @submit="saveAppointment"
         @cancel="cancelEdit"
@@ -38,7 +39,7 @@
               <td>{{ item.family_name }} · {{ item.family_phone }}</td>
               <td>{{ formatTime(item.visit_time) }}</td>
               <td>{{ item.visitor_count }}</td>
-              <td><span :class="['badge', item.status]">{{ statusText[item.status] }}</span></td>
+              <td><span :class="['badge', item.status]">{{ STATUS_TEXT[item.status] }}</span></td>
               <td>{{ item.notes || '无' }}</td>
               <td>
                 <div class="actions">
@@ -63,6 +64,7 @@ import { computed, onMounted, reactive, ref } from 'vue'
 import AppointmentForm from '../components/AppointmentForm.vue'
 import EmptyState from '../components/EmptyState.vue'
 import PageHeader from '../components/PageHeader.vue'
+import { STATUS_TEXT, isTerminalStatus } from '../constants/appointments'
 import { appointmentsApi } from '../services/appointments'
 import { residentsApi } from '../services/residents'
 
@@ -72,7 +74,6 @@ const message = ref('')
 const messageType = ref('')
 const editingId = ref(null)
 const originalStatus = ref('')
-const statusText = { pending: '待审核', approved: '已通过', rejected: '已拒绝', completed: '已完成', cancelled: '已取消' }
 
 const ACTION_MAP = {
   approve: { key: 'approve', label: '通过', className: 'success', status: 'approved' },
@@ -82,8 +83,6 @@ const ACTION_MAP = {
   edit: { key: 'edit', label: '编辑', className: 'secondary' },
   note: { key: 'edit', label: '修改备注', className: 'secondary' }
 }
-
-const TERMINAL_STATUSES = ['completed', 'cancelled', 'rejected']
 
 const TRANSITION_RULES = {
   pending: ['approve', 'reject', 'cancel', 'edit'],
@@ -105,11 +104,11 @@ const initialForm = {
 }
 const form = reactive({ ...initialForm })
 
-const isTerminalStatus = computed(() => TERMINAL_STATUSES.includes(originalStatus.value))
+const isTerminalEdit = computed(() => isTerminalStatus(originalStatus.value))
 
 const formTitle = computed(() => {
   if (!editingId.value) return '新建预约'
-  return isTerminalStatus.value ? '修改备注' : '编辑预约'
+  return isTerminalEdit.value ? '修改备注' : '编辑预约'
 })
 
 onMounted(async () => {
@@ -132,7 +131,7 @@ function availableActions(status) {
 async function saveAppointment() {
   try {
     if (editingId.value) {
-      const payload = isTerminalStatus.value
+      const payload = isTerminalEdit.value
         ? { notes: form.notes }
         : { ...form }
       await appointmentsApi.update(editingId.value, payload)
@@ -157,7 +156,7 @@ async function doAction(item, actionKey) {
   const action = ACTION_MAP[actionKey]
   const confirmMsg = actionKey === 'cancel'
     ? `确定要取消此预约吗？`
-    : `确定将状态变更为「${statusText[action.status]}」吗？`
+    : `确定将状态变更为「${STATUS_TEXT[action.status]}」吗？`
   if (!window.confirm(confirmMsg)) return
   try {
     if (actionKey === 'cancel') {
