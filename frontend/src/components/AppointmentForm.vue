@@ -3,7 +3,7 @@
     <template v-if="!(isEdit && isTerminal)">
       <label>
         探视老人
-        <select v-model.number="model.resident_id" required :disabled="isEdit && isTerminal">
+        <select v-model.number="model.resident_id" required>
           <option disabled value="">请选择</option>
           <option v-for="resident in residents" :key="resident.id" :value="resident.id">
             {{ resident.name }} · {{ resident.room_number }}
@@ -12,27 +12,27 @@
       </label>
       <label>
         家属姓名
-        <input v-model="model.family_name" required :disabled="isEdit && isTerminal" />
+        <input v-model="model.family_name" required />
       </label>
       <label>
         家属电话
-        <input v-model="model.family_phone" required :disabled="isEdit && isTerminal" />
+        <input v-model="model.family_phone" required />
       </label>
       <label>
         关系
-        <input v-model="model.relationship" required :disabled="isEdit && isTerminal" />
+        <input v-model="model.relationship" required />
       </label>
       <label>
         探视时间
-        <input v-model="model.visit_time" type="datetime-local" required :disabled="isEdit && isTerminal" />
+        <input v-model="model.visit_time" type="datetime-local" required />
       </label>
       <label>
         人数
-        <input v-model.number="model.visitor_count" type="number" min="1" required :disabled="isEdit && isTerminal" />
+        <input v-model.number="model.visitor_count" type="number" min="1" required />
       </label>
       <label>
         状态
-        <select v-model="model.status" :disabled="isEdit && isTerminal">
+        <select v-model="model.status">
           <option v-for="opt in allowedStatusOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
         </select>
       </label>

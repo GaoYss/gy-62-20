@@ -132,7 +132,10 @@ function availableActions(status) {
 async function saveAppointment() {
   try {
     if (editingId.value) {
-      await appointmentsApi.update(editingId.value, { ...form })
+      const payload = isTerminalStatus.value
+        ? { notes: form.notes }
+        : { ...form }
+      await appointmentsApi.update(editingId.value, payload)
       showMessage('修改已保存', 'success')
     } else {
       await appointmentsApi.create(form)
