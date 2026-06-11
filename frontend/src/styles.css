@@ -460,3 +460,14 @@ textarea:disabled {
   color: #6c7a88;
   cursor: not-allowed;
 }
+
+.terminal-notice {
+  margin: 0 0 14px;
+  padding: 10px 14px;
+  background: #fff5e6;
+  color: #8a5a00;
+  border-left: 3px solid #f2c14e;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 600;
+}

@@ -3,7 +3,8 @@
     <PageHeader eyebrow="预约" title="家属预约探视" description="家属提交探视申请，工作人员可登记预约状态和备注。" />
 
     <article class="panel">
-      <h3>{{ editingId ? '编辑预约' : '新建预约' }}</h3>
+      <h3>{{ formTitle }}</h3>
+      <p v-if="editingId && isTerminalStatus" class="terminal-notice">当前为终态预约，仅可修改备注信息。</p>
       <AppointmentForm
         :model="form"
         :residents="residents"
@@ -58,7 +59,7 @@
 </template>
 
 <script setup>
-import { onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import AppointmentForm from '../components/AppointmentForm.vue'
 import EmptyState from '../components/EmptyState.vue'
 import PageHeader from '../components/PageHeader.vue'
@@ -78,15 +79,18 @@ const ACTION_MAP = {
   reject: { key: 'reject', label: '拒绝', className: 'danger', status: 'rejected' },
   complete: { key: 'complete', label: '完成', className: 'primary', status: 'completed' },
   cancel: { key: 'cancel', label: '取消', className: 'warning', status: 'cancelled' },
-  edit: { key: 'edit', label: '编辑', className: 'secondary' }
+  edit: { key: 'edit', label: '编辑', className: 'secondary' },
+  note: { key: 'edit', label: '修改备注', className: 'secondary' }
 }
+
+const TERMINAL_STATUSES = ['completed', 'cancelled', 'rejected']
 
 const TRANSITION_RULES = {
   pending: ['approve', 'reject', 'cancel', 'edit'],
   approved: ['complete', 'cancel', 'edit'],
-  rejected: ['edit'],
-  completed: ['edit'],
-  cancelled: ['edit']
+  rejected: ['note'],
+  completed: ['note'],
+  cancelled: ['note']
 }
 
 const initialForm = {
@@ -100,6 +104,13 @@ const initialForm = {
   notes: ''
 }
 const form = reactive({ ...initialForm })
+
+const isTerminalStatus = computed(() => TERMINAL_STATUSES.includes(originalStatus.value))
+
+const formTitle = computed(() => {
+  if (!editingId.value) return '新建预约'
+  return isTerminalStatus.value ? '修改备注' : '编辑预约'
+})
 
 onMounted(async () => {
   await Promise.all([loadResidents(), loadAppointments()])
@@ -131,7 +142,7 @@ async function saveAppointment() {
     cancelEdit()
     await loadAppointments()
   } catch (e) {
-    showMessage(e.response?.data?.error || '操作失败', 'error')
+    showMessage(e.message || '操作失败', 'error')
   }
 }
 
@@ -154,7 +165,7 @@ async function doAction(item, actionKey) {
     showMessage(`操作成功：${action.label}`, 'success')
     await loadAppointments()
   } catch (e) {
-    showMessage(e.response?.data?.error || '操作失败', 'error')
+    showMessage(e.message || '操作失败', 'error')
   }
 }
 
